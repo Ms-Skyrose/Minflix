@@ -11,11 +11,10 @@ Built with Next.js (App Router) + Tailwind CSS, with Supabase for data.
 | `/` | Landing page: live festival count, "Joining now" (last 3 signups), festival network leaderboard (every country, top 5 visible, scroll for the rest), directory preview, the nine-tools problem, the Minflix workflow loop, CTA |
 | `/join` | Waitlist form: email, festival name, country, logo (optional), festival type, films per edition, next edition, website/social. `?ref=<slug>` credits the inviting festival |
 | `/join/done` | "You're on the list", share card link, personal invite link, and the "biggest headache" question |
-| `/directory` | Public, searchable directory (name, country, type) with a detail panel per festival |
+| `/directory` | Public, searchable directory (name, country, type), filterable by continent, with a detail panel per festival |
 | `/f/<slug>` | A festival's public card page, with its share image as the link preview |
 | `/f/<slug>/card.png` | The 1080×1350 share card image |
 | `/opengraph-image` | Link preview for the site, with the live count |
-| `emails/launch.html` | Launch announcement email template (merge fields listed at the top) |
 
 ### Rules built in
 
@@ -44,4 +43,4 @@ Supabase → Table Editor → `festivals` (export to CSV from there). Useful col
 
 ## Brand
 
-Navy-black `#000C14`, magenta `#E400EC`, electric blue `#0A7AE8`, Poppins, dashed curve motifs and frosted-glass panels. Tokens live in `src/app/globals.css`. The hero photo is from Minflix's own social design; the logo is drawn in `src/components/brand.tsx` and can be swapped for the official file.
+Navy-black `#000C14`, magenta `#E400EC`, electric blue `#0A7AE8`, Poppins, dashed curve motifs and frosted-glass panels. Tokens live in `src/app/globals.css`. The hero image (`public/hero-festival.jpg`) is a rendered festival-night illustration; replace it with a real festival photo when you have one (same file name, roughly 16:10). the logo is drawn in `src/components/brand.tsx` and can be swapped for the official file.

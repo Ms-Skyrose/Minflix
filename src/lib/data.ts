@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "./supabase";
-import { COUNTRIES, countryByCode } from "./countries";
+import { codesIn, COUNTRIES, countryByCode } from "./countries";
 
 export type Festival = {
   slug: string;
@@ -55,13 +55,14 @@ export async function getLeaderboard(): Promise<CountryRow[]> {
   return rows.map((r, i) => ({ ...r, rank: r.festivals > 0 ? i + 1 : null }));
 }
 
-export type DirectoryQuery = { q?: string; country?: string; type?: string };
+export type DirectoryQuery = { q?: string; continent?: string; type?: string };
 
-export async function getDirectory({ q, country, type }: DirectoryQuery, limit = 60): Promise<Festival[]> {
+export async function getDirectory({ q, continent, type }: DirectoryQuery, limit = 60): Promise<Festival[]> {
   const client = db();
   if (!client) return [];
   let query = client.from("festivals").select(PUBLIC_COLUMNS).eq("listed", true);
-  if (country) query = query.eq("country_code", country.toUpperCase());
+  const inContinent = codesIn(continent);
+  if (inContinent) query = query.in("country_code", inContinent);
   if (type) query = query.eq("festival_type", type);
   if (q) {
     const term = q.replace(/[%,()]/g, " ").trim();

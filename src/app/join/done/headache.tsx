@@ -30,7 +30,7 @@ export function Headache({ slug, token }: { slug: string; token: string }) {
 
   return (
     <div className="flex flex-col gap-3 border-t border-dashed border-white/20 pt-5">
-      <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-magenta-soft">Help shape Minflix Events</span>
+      <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-magenta-soft">Help us know your biggest need</span>
       <span className="text-[19px] font-bold leading-snug">What&apos;s the biggest headache you have running your festival?</span>
       <span className="text-[13px] text-fog">Choose one</span>
       <div className="flex flex-wrap gap-2">

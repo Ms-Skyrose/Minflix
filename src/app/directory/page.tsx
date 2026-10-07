@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Arrow, FestivalTile, Footer, Nav } from "@/components/brand";
 import { CountUp } from "@/components/count-up";
-import { FESTIVAL_TYPES } from "@/lib/countries";
-import { countryName, getDirectory, getLeaderboard, getTotal, type Festival } from "@/lib/data";
+import { CONTINENTS, FESTIVAL_TYPES } from "@/lib/countries";
+import { countryName, getDirectory, getTotal, type Festival } from "@/lib/data";
 import { displayUrl, hrefFor, MIN_PUBLIC_COUNT } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -12,21 +12,19 @@ export const metadata: Metadata = {
 };
 export const revalidate = 60;
 
-type Params = { q?: string; country?: string; type?: string; f?: string };
+type Params = { q?: string; continent?: string; type?: string; f?: string };
 
 export default async function DirectoryPage({ searchParams }: { searchParams: Promise<Params> }) {
   const p = await searchParams;
-  const [festivals, total, board] = await Promise.all([
-    getDirectory({ q: p.q, country: p.country, type: p.type }),
-    getTotal(),
-    getLeaderboard(),
-  ]);
-  const countries = board.filter((c) => c.festivals > 0);
+  const continent = CONTINENTS.find((c) => c === p.continent);
+  const [festivals, total] = await Promise.all([getDirectory({ q: p.q, continent, type: p.type }), getTotal()]);
   const selected: Festival | undefined = festivals.find((f) => f.slug === p.f) ?? festivals[0];
-  const link = (f: Festival) => {
-    const qs = new URLSearchParams({ ...(p.q && { q: p.q }), ...(p.country && { country: p.country }), ...(p.type && { type: p.type }), f: f.slug });
-    return `/directory?${qs}#details`;
+  const href = (extra: Record<string, string | undefined>) => {
+    const all = { q: p.q, continent, type: p.type, ...extra };
+    const qs = new URLSearchParams(Object.entries(all).filter((e): e is [string, string] => !!e[1]));
+    return `/directory${qs.size ? `?${qs}` : ""}`;
   };
+  const link = (f: Festival) => `${href({ f: f.slug })}#details`;
 
   return (
     <main className="relative overflow-hidden">
@@ -56,16 +54,24 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
             <span className="sr-only">Search festivals</span>
             <input name="q" type="search" defaultValue={p.q} placeholder="Search festivals, cities or types" className="min-w-0 flex-1 bg-transparent py-3 text-base outline-none" />
           </label>
-          <select name="country" defaultValue={p.country ?? ""} aria-label="Country" className="field !w-auto !rounded-full">
-            <option value="">All countries</option>
-            {countries.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
-          </select>
+          {continent && <input type="hidden" name="continent" value={continent} />}
           <select name="type" defaultValue={p.type ?? ""} aria-label="Festival type" className="field !w-auto !rounded-full">
             <option value="">All types</option>
             {FESTIVAL_TYPES.map((t) => <option key={t}>{t}</option>)}
           </select>
           <button type="submit" className="btn-blue">Search</button>
         </form>
+        <nav aria-label="Filter by continent" className="flex flex-wrap gap-2">
+          {[undefined, ...CONTINENTS].map((c) => {
+            const on = c === continent;
+            return (
+              <Link key={c ?? "all"} href={href({ continent: c, f: undefined })} aria-current={on ? "page" : undefined} scroll={false}
+                className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm ${on ? "bg-magenta font-semibold text-ink" : "border border-white/15 bg-white/[0.06] font-medium"}`}>
+                {c ?? "All"}
+              </Link>
+            );
+          })}
+        </nav>
         {festivals.length >= MIN_PUBLIC_COUNT && <p className="m-0 text-[13px] text-[#8FA4AD]">{festivals.length} Festivals</p>}
       </section>
 

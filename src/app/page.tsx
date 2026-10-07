@@ -50,10 +50,10 @@ export default async function Home() {
 
           <div className="flex min-w-0 flex-[1_1_440px] flex-col">
             <div className="relative aspect-[16/10] overflow-hidden rounded-[28px] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)]">
-              <Image src="/hero-filmset.jpg" alt="Filmmakers in Minflix director's chairs watching a crew set up a shot" fill priority
+              <Image src="/hero-festival.jpg" alt="A festival audience watching an open-air screening under string lights" fill priority
                 sizes="(max-width: 900px) 100vw, 600px" className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent from-45% to-ink/75" />
-              <span className="glass absolute left-3.5 top-3.5 rounded-full px-3 py-1.5 text-xs font-semibold">Festival season starts on set</span>
+              <span className="glass absolute left-3.5 top-3.5 rounded-full px-3 py-1.5 text-xs font-semibold">Festival night, run on Minflix</span>
             </div>
             {recent.length > 0 && (
               <div className="glass relative mx-3.5 -mt-14 flex flex-col gap-2.5 rounded-3xl p-4">
