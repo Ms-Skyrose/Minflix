@@ -30,10 +30,10 @@ export function Logo({ size = 19 }: { size?: number }) {
   );
 }
 
-export function Nav({ links = true }: { links?: boolean }) {
+export function Nav({ links = true, cta = true }: { links?: boolean; cta?: boolean }) {
   return (
     <header className="relative z-10 mx-auto max-w-[1240px] px-4 pt-4">
-      <div className="glass flex items-center justify-between gap-3 rounded-full py-2 pl-4 pr-2">
+      <div className={`glass flex min-h-[60px] items-center justify-between gap-3 rounded-full py-2 pl-4 ${cta ? "pr-2" : "pr-4"}`}>
         <Logo />
         <nav aria-label="Main" className="flex items-center gap-5 text-[15px]">
           {links && (
@@ -42,7 +42,7 @@ export function Nav({ links = true }: { links?: boolean }) {
               <Link href="/directory" className="hidden text-[#D6E1E5] hover:text-white sm:inline">Directory</Link>
             </>
           )}
-          <Link href="/join" className="btn-blue !min-h-0 whitespace-nowrap !px-4 !py-2.5 text-sm">Join waitlist</Link>
+          {cta && <Link href="/join" className="btn-blue !min-h-0 whitespace-nowrap !px-4 !py-2.5 text-sm">Join waitlist</Link>}
         </nav>
       </div>
     </header>

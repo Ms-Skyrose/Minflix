@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Arrow, Nav } from "@/components/brand";
-import { CopyLink } from "@/components/copy-link";
 import { getFestival } from "@/lib/data";
 import { siteUrl } from "@/lib/format";
-import { Headache } from "./headache";
 import { CardActions } from "./card-actions";
 
 export const metadata: Metadata = { title: "You're on the Minflix Events list", robots: { index: false } };
@@ -18,7 +16,7 @@ export default async function DonePage({ searchParams }: { searchParams: Promise
     <main className="relative min-h-dvh overflow-hidden pb-16">
       <div className="orb -left-24 -top-16 size-[380px] bg-magenta/50" />
       <div className="orb -right-36 top-[560px] size-[360px] bg-blue/40" />
-      <Nav links={false} />
+      <Nav links={false} cta={false} />
       <div className="relative mx-auto mt-6 max-w-[560px] px-4">
         <div className="glass flex flex-col gap-5.5 rounded-[30px] px-5 py-7 sm:px-7">
           <div className="flex flex-col gap-2.5">
@@ -49,16 +47,17 @@ export default async function DonePage({ searchParams }: { searchParams: Promise
                   Open your festival&apos;s card page <Arrow />
                 </Link>
               </section>
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold">Know another festival getting ready for its next edition?</span>
-                <CopyLink url={`${siteUrl()}/join?ref=${festival.ref_code}`} label="Invite to Minflix Festival Network" />
-              </div>
             </>
           )}
 
-          {festival && t && <Headache slug={festival.slug} token={t} />}
-
-          <Link href="/directory" className="glass-soft rounded-full py-3.5 text-center font-semibold">See the festival directory</Link>
+          {/* One job per screen: the biggest-need question comes next */}
+          {festival && t ? (
+            <Link href={`/join/need?f=${festival.slug}&t=${t}`} className="glass-soft flex min-h-[52px] items-center justify-center gap-2 rounded-full font-semibold">
+              Continue <Arrow />
+            </Link>
+          ) : (
+            <Link href="/directory" className="glass-soft rounded-full py-3.5 text-center font-semibold">See the festival directory</Link>
+          )}
         </div>
       </div>
     </main>
