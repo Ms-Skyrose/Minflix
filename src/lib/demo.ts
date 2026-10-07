@@ -23,7 +23,7 @@ export const DEMO: Festival[] = [
   created_at: ago(Number(min)),
   festival_name: String(name),
   country_code: String(cc),
-  logo_url: null,
+  logo_url: i === 0 ? process.env.DEMO_LOGO || null : null,
   festival_type: String(type),
   next_edition: String(next),
   website: web ? String(web) : null,
