@@ -44,7 +44,10 @@ export async function getRecent(limit = 3): Promise<Festival[]> {
   return data ?? [];
 }
 
-const FOCUS = ["NG", "GH", "KE", "ZA"];
+// The biggest film-entertainment country on each continent leads any tie (including the empty start):
+// Africa: Nigeria (Nollywood) · North America: United States · Asia: India · Europe: France
+// South America: Brazil · Oceania: Australia
+const FOCUS = ["NG", "US", "IN", "FR", "BR", "AU"];
 
 export type CountryRow ={ code: string; name: string; festivals: number; rank: number | null };
 
@@ -59,7 +62,7 @@ export async function getLeaderboard(): Promise<CountryRow[]> {
   } else {
     for (const f of offline()) counts.set(f.country_code, (counts.get(f.country_code) ?? 0) + 1);
   }
-  // Ties (including the empty start) put the launch markets first, then A–Z.
+  // Most festivals first; ties go to each continent's leading film market, then A–Z.
   const focus = (code: string) => {
     const i = FOCUS.indexOf(code);
     return i === -1 ? FOCUS.length : i;
