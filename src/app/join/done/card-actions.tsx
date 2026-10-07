@@ -9,6 +9,7 @@ export function CardActions({ src, filename, title, pagePath }: { src: string; f
   const pageUrl = `${origin}${pagePath}`;
   const [busy, setBusy] = useState(false);
   const [canShareFile, setCanShareFile] = useState<boolean | null>(null);
+  const [failed, setFailed] = useState(false);
 
   async function getFile() {
     const res = await fetch(src);
@@ -19,6 +20,7 @@ export function CardActions({ src, filename, title, pagePath }: { src: string; f
 
   async function download() {
     setBusy(true);
+    setFailed(false);
     try {
       const file = await getFile();
       const url = URL.createObjectURL(file);
@@ -30,7 +32,7 @@ export function CardActions({ src, filename, title, pagePath }: { src: string; f
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
     } catch {
-      window.open(src, "_blank"); // fallback: open the image; long-press to save
+      setFailed(true); // never open a broken page; say what happened instead
     } finally {
       setBusy(false);
     }
@@ -47,8 +49,8 @@ export function CardActions({ src, filename, title, pagePath }: { src: string; f
       } else {
         setCanShareFile(false);
       }
-    } catch {
-      /* the person closed the share sheet */
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) setFailed(true); // AbortError = share sheet closed
     } finally {
       setBusy(false);
     }
@@ -67,6 +69,7 @@ export function CardActions({ src, filename, title, pagePath }: { src: string; f
           Share
         </button>
       </div>
+      {failed && <p role="alert" className="m-0 text-sm text-[#FF8A80]">We couldn&apos;t prepare your card just now. Please try again in a minute.</p>}
       {canShareFile === false && <p className="m-0 text-xs text-fog">Sharing isn&apos;t available in this browser. Download the card and post it from your gallery.</p>}
     </div>
   );
