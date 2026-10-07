@@ -7,7 +7,7 @@ import { HEADACHES } from "@/lib/countries";
 import { CopyLink } from "@/components/copy-link";
 
 /** The biggest-need question on its own screen; the invite link and directory come only after it. */
-export function Headache({ slug, token, inviteUrl }: { slug: string; token: string; inviteUrl: string }) {
+export function Headache({ slug, token, invitePath }: { slug: string; token: string; invitePath: string }) {
   const [picked, setPicked] = useState<string | null>(null);
   const [skipped, setSkipped] = useState(false);
   const [pending, start] = useTransition();
@@ -57,7 +57,7 @@ export function Headache({ slug, token, inviteUrl }: { slug: string; token: stri
       )}
       <div className="flex flex-col gap-2 border-t border-dashed border-white/20 pt-5">
         <span className="font-semibold">Know another festival getting ready for its next edition?</span>
-        <CopyLink url={inviteUrl} label="Invite to Minflix Festival Network" />
+        <CopyLink path={invitePath} label="Invite to Minflix Festival Network" />
       </div>
       <Link href="/directory" className="glass-soft rounded-full py-3.5 text-center font-semibold">See the festival directory</Link>
     </div>

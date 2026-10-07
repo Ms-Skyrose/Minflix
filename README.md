@@ -36,13 +36,13 @@ The "Festival season" cards on the landing page are built from the quarter each 
 
 1. **Create a Supabase project** (free tier is fine).
 2. **Run the schema**: open SQL Editor, paste `supabase/migrations/0001_festival_waitlist.sql`, run it. This creates the `festivals` table, the country-count view and the public `festival-logos` storage bucket.
-3. **Environment**: copy `.env.example` to `.env.local` and fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Project settings → API) and `NEXT_PUBLIC_SITE_URL`.
+3. **Environment**: copy `.env.example` to `.env.local` and fill in `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (Project settings → API). There is no site-URL setting: invite links, card links and the domain printed on share cards all follow the domain the site is opened on, so they work on the Vercel URL today and on events.minflix.com once it's connected.
 4. **Run it**
    ```bash
    npm install
    npm run dev
    ```
-5. **Deploy**: import the repo on Vercel and add the same three environment variables.
+5. **Deploy**: import the repo on Vercel and add the same two environment variables.
 
 Without the Supabase variables the site still renders (with no festivals yet), and the form explains that the waitlist isn't connected.
 

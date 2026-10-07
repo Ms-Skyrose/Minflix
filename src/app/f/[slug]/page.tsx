@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { Arrow, FestivalTile, Footer, Nav } from "@/components/brand";
 import { CopyLink } from "@/components/copy-link";
 import { countryName, getFestival } from "@/lib/data";
-import { siteUrl } from "@/lib/format";
 
 type Props = { params: Promise<{ slug: string }> };
 export const revalidate = 10;
@@ -25,7 +24,7 @@ export default async function FestivalCardPage({ params }: Props) {
   const { slug } = await params;
   const f = await getFestival(slug);
   if (!f) notFound();
-  const shareUrl = `${siteUrl()}/f/${f.slug}`;
+
 
   return (
     <main className="relative overflow-hidden">
@@ -49,7 +48,7 @@ export default async function FestivalCardPage({ params }: Props) {
           <Link href={`/join?ref=${f.ref_code}`} className="btn-blue self-start">Join Minflix to be notified <Arrow /></Link>
           <div className="glass mt-4 flex flex-col gap-3 rounded-3xl p-5">
             <span className="font-semibold">Share this card</span>
-            <CopyLink url={shareUrl} label="Copy card link" shareText={`${f.festival_name}: our next edition is coming to Minflix Events`} />
+            <CopyLink path={`/f/${f.slug}`} label="Copy card link" shareText={`${f.festival_name}: our next edition is coming to Minflix Events`} />
             <a href={`/f/${f.slug}/card.png`} download className="text-center text-sm font-semibold underline">Download image</a>
           </div>
         </div>

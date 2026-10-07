@@ -48,8 +48,16 @@ export function tileFor(key: string) {
   return TILES[h % TILES.length];
 }
 
-export function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://events.minflix.com").replace(/\/$/, "");
+/**
+ * Base URL for link-preview metadata, taken from the deployment itself (no hardcoded domain):
+ * production → the project's production domain (the Vercel URL now, events.minflix.com once it's
+ * connected and set as production), previews → that deployment's URL, locally → localhost.
+ * Links people copy are built in the browser from the page's own address instead.
+ */
+export function deploymentOrigin(): string {
+  const prod = process.env.VERCEL_ENV === "production" ? process.env.VERCEL_PROJECT_PRODUCTION_URL : undefined;
+  const host = prod || process.env.VERCEL_URL;
+  return host ? `https://${host}` : "http://localhost:3000";
 }
 
 export function displayUrl(u: string | null | undefined): string {

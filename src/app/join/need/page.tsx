@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Nav } from "@/components/brand";
 import { getFestival } from "@/lib/data";
-import { siteUrl } from "@/lib/format";
 import { Headache } from "../done/headache";
 
 export const metadata: Metadata = { title: "Help us know your biggest need · Minflix Events", robots: { index: false } };
@@ -21,7 +20,7 @@ export default async function NeedPage({ searchParams }: { searchParams: Promise
       <Nav links={false} cta={false} />
       <div className="relative mx-auto mt-6 max-w-[560px] px-4">
         <div className="glass flex flex-col gap-5 rounded-[30px] px-5 py-7 sm:px-7">
-          <Headache slug={festival.slug} token={t} inviteUrl={`${siteUrl()}/join?ref=${festival.ref_code}`} />
+          <Headache slug={festival.slug} token={t} invitePath={`/join?ref=${festival.ref_code}`} />
         </div>
       </div>
     </main>

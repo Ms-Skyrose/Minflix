@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Arrow, Nav } from "@/components/brand";
 import { getFestival } from "@/lib/data";
-import { siteUrl } from "@/lib/format";
 import { CardActions } from "./card-actions";
 
 export const metadata: Metadata = { title: "You're on the Minflix Events list", robots: { index: false } };
@@ -41,7 +40,7 @@ export default async function DonePage({ searchParams }: { searchParams: Promise
                   src={`/f/${festival.slug}/card.png`}
                   filename={`${festival.slug}-minflix-events.png`}
                   title={`${festival.festival_name}: our next edition is coming to Minflix Events`}
-                  pageUrl={`${siteUrl()}/f/${festival.slug}`}
+                  pagePath={`/f/${festival.slug}`}
                 />
                 <Link href={`/f/${festival.slug}`} className="inline-flex items-center gap-1.5 self-start text-[13px] text-mist underline">
                   Open your festival&apos;s card page <Arrow />

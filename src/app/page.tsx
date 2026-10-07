@@ -5,7 +5,7 @@ import { CountUp } from "@/components/count-up";
 import { CopyLink } from "@/components/copy-link";
 import { ToolWindows, WorkflowLoop } from "@/components/sections";
 import { countryName, getDirectory, getLeaderboard, getRecent, getSeason, getTotal } from "@/lib/data";
-import { MIN_PUBLIC_COUNT, siteUrl, timeAgo } from "@/lib/format";
+import { MIN_PUBLIC_COUNT, timeAgo } from "@/lib/format";
 
 // New festivals show up within 10 seconds (and immediately after a join, via revalidatePath).
 export const revalidate = 10;
@@ -118,7 +118,7 @@ export default async function Home() {
           <div className="glass flex min-w-0 flex-[1_1_320px] flex-col justify-center gap-3 rounded-[26px] p-6">
             <span className="text-xl font-bold leading-snug">Know another festival getting ready for its next edition?</span>
             <span className="text-[15px] text-mist">Every festival that joins moves your country up the list.</span>
-            <CopyLink url={`${siteUrl()}/join`} label="Invite to Minflix Festival Network" shareText="Get your festival listed in the 2027 Minflix Events Directory" />
+            <CopyLink path="/join" label="Invite to Minflix Festival Network" shareText="Get your festival listed in the 2027 Minflix Events Directory" />
           </div>
         </div>
       </section>

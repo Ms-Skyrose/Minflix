@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useOrigin } from "@/components/copy-link";
 
 /** Download the festival's share card, or share it straight to WhatsApp/Instagram where the phone supports it. */
-export function CardActions({ src, filename, title, pageUrl }: { src: string; filename: string; title: string; pageUrl: string }) {
+export function CardActions({ src, filename, title, pagePath }: { src: string; filename: string; title: string; pagePath: string }) {
+  const origin = useOrigin();
+  const pageUrl = `${origin}${pagePath}`;
   const [busy, setBusy] = useState(false);
   const [canShareFile, setCanShareFile] = useState<boolean | null>(null);
 
