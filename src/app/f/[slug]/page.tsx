@@ -7,7 +7,7 @@ import { countryName, getFestival } from "@/lib/data";
 import { siteUrl } from "@/lib/format";
 
 type Props = { params: Promise<{ slug: string }> };
-export const revalidate = 300;
+export const revalidate = 10;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -46,7 +46,7 @@ export default async function FestivalCardPage({ params }: Props) {
           </span>
           <h1 className="display m-0 text-[clamp(30px,4vw,46px)]">Our next edition is coming to <span className="text-magenta">Minflix Events.</span></h1>
           <p className="m-0 text-lg text-mist">A new home for our festival.</p>
-          <Link href={`/join?ref=${f.slug}`} className="btn-blue self-start">Join Minflix to be notified <Arrow /></Link>
+          <Link href={`/join?ref=${f.ref_code}`} className="btn-blue self-start">Join Minflix to be notified <Arrow /></Link>
           <div className="glass mt-4 flex flex-col gap-3 rounded-3xl p-5">
             <span className="font-semibold">Share this card</span>
             <CopyLink url={shareUrl} label="Copy card link" shareText={`${f.festival_name}: our next edition is coming to Minflix Events`} />

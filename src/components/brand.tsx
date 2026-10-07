@@ -1,12 +1,20 @@
 import Link from "next/link";
 import { initials, tileFor } from "@/lib/format";
 
+/** The Minflix "M" wave, drawn to match the official Logo Icon (swap for the original SVG when available). */
+export const WAVE_PATH = "M5 30 L12.8 13.5 L26.2 42 L37.7 5 L49.7 29.2";
+export function WaveMark({ height = 24 }: { height?: number }) {
+  return (
+    <svg height={height} width={(height * 55) / 47} viewBox="0 0 55 47" aria-hidden="true">
+      <path d={WAVE_PATH} fill="none" stroke="#E400EC" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function MinflixMark({ size = 19 }: { size?: number }) {
   return (
     <span className="inline-flex items-center gap-px" style={{ fontSize: size }}>
-      <svg width={size * 1.8} height={size * 1.25} viewBox="0 0 44 30" aria-hidden="true">
-        <path d="M4 20 L11 11 L19 27 L28 3 L39 18" fill="none" stroke="#E400EC" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <WaveMark height={size * 1.25} />
       <span className="font-extrabold leading-none tracking-[0.02em] text-magenta">IN</span>
       <span className="font-extrabold leading-none tracking-[0.02em] text-white">FLIX</span>
     </span>

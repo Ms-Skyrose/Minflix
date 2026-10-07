@@ -6,8 +6,8 @@ const INK = "#000C14";
 
 function Wave({ w = 58 }: { w?: number }) {
   return (
-    <svg width={w} height={(w * 30) / 44} viewBox="0 0 44 30">
-      <path d="M4 20 L11 11 L19 27 L28 3 L39 18" fill="none" stroke={MAGENTA} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={w * 0.8} height={(w * 0.8 * 47) / 55} viewBox="0 0 55 47">
+      <path d="M5 30 L12.8 13.5 L26.2 42 L37.7 5 L49.7 29.2" fill="none" stroke={MAGENTA} strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

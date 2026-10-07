@@ -4,13 +4,16 @@ import { Arrow, FestivalTile, Footer, Nav } from "@/components/brand";
 import { CountUp } from "@/components/count-up";
 import { CopyLink } from "@/components/copy-link";
 import { ToolWindows, WorkflowLoop } from "@/components/sections";
-import { countryName, getDirectory, getLeaderboard, getRecent, getTotal } from "@/lib/data";
+import { countryName, getDirectory, getLeaderboard, getRecent, getSeason, getTotal } from "@/lib/data";
 import { MIN_PUBLIC_COUNT, siteUrl, timeAgo } from "@/lib/format";
 
-export const revalidate = 60;
+// New festivals show up within 10 seconds (and immediately after a join, via revalidatePath).
+export const revalidate = 10;
 
 export default async function Home() {
-  const [total, recent, board, featured] = await Promise.all([getTotal(), getRecent(3), getLeaderboard(), getDirectory({}, 3)]);
+  const [total, recent, board, featured, season] = await Promise.all([
+    getTotal(), getRecent(3), getLeaderboard(), getDirectory({}, 3), getSeason(3),
+  ]);
   const showCount = total >= MIN_PUBLIC_COUNT;
   const withFestivals = board.filter((c) => c.festivals > 0).length;
   const top = board[0]?.festivals || 1;
@@ -211,6 +214,42 @@ export default async function Home() {
           </div>
           <WorkflowLoop />
           <Link href="/join" className="btn-blue">Join waitlist</Link>
+        </div>
+      </section>
+
+      {/* CATALYST: festival season, built from the quarters festivals give when they join */}
+      <section className="relative mx-auto flex max-w-[1240px] flex-col gap-7 px-4 pt-[clamp(64px,8vw,104px)]">
+        <div className="flex max-w-[720px] flex-col gap-2.5">
+          <p className="eyebrow m-0">Festival season</p>
+          <h2 className="display m-0 text-[clamp(28px,3.6vw,44px)]">The festival calendar doesn&apos;t wait. Get listed before your next call for entries.</h2>
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-3">
+          {season.map((s) => (
+            <div key={s.quarter} className="glass flex flex-col gap-2.5 rounded-[20px] p-5">
+              <span className="text-xs font-semibold tracking-[0.06em] text-magenta-soft">{s.quarter.toUpperCase()}</span>
+              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {s.festivals.map((f) => (
+                  <li key={f.slug}>
+                    <Link href={`/directory?f=${f.slug}#details`} className="flex items-center gap-2.5">
+                      <FestivalTile name={f.festival_name} logo={f.logo_url} size={30} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[15px] font-semibold">{f.festival_name}</span>
+                        <span className="block text-xs text-fog">{countryName(f.country_code)}</span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {s.total > s.festivals.length && (
+                <Link href="/directory" className="text-[13px] text-mist underline">+{s.total - s.festivals.length} more next edition{s.total - s.festivals.length > 1 ? "s" : ""}</Link>
+              )}
+            </div>
+          ))}
+          <Link href="/join" className="flex flex-col gap-1.5 rounded-[20px] border-[1.5px] border-dashed border-white/30 p-5">
+            <span className="text-xs font-semibold tracking-[0.06em] text-fog">YOUR NEXT EDITION</span>
+            <span className="text-lg font-bold">Your festival here</span>
+            <span className="text-sm">Tell us your quarter and join the waitlist →</span>
+          </Link>
         </div>
       </section>
 

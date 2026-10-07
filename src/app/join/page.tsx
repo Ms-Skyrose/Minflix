@@ -12,7 +12,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
       <div className="orb -left-40 top-[640px] size-[360px] bg-blue/40" />
       <Nav links={false} />
       <div className="relative mx-auto mt-6 max-w-[560px] px-4">
-        <JoinForm refSlug={ref?.replace(/[^a-z0-9-]/g, "").slice(0, 80)} />
+        <JoinForm refSlug={ref?.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 90)} />
       </div>
     </main>
   );

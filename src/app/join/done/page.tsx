@@ -40,7 +40,7 @@ export default async function DonePage({ searchParams }: { searchParams: Promise
               </Link>
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-semibold">Know another festival getting ready for its next edition?</span>
-                <CopyLink url={`${siteUrl()}/join?ref=${festival.slug}`} label="Invite to Minflix Festival Network" />
+                <CopyLink url={`${siteUrl()}/join?ref=${festival.ref_code}`} label="Invite to Minflix Festival Network" />
               </div>
             </>
           )}

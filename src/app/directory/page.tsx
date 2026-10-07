@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "2027 Minflix Events Directory",
   description: "Film festivals getting ready for their next edition on Minflix. Search by name, country or type.",
 };
-export const revalidate = 60;
+export const revalidate = 10;
 
 type Params = { q?: string; continent?: string; type?: string; f?: string };
 

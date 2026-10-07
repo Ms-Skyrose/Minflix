@@ -51,15 +51,16 @@ export async function joinWaitlist(_prev: JoinState, form: FormData): Promise<Jo
     films_per_edition: pick(FILMS_PER_EDITION, form.get("films_per_edition")),
     next_edition: pick(NEXT_EDITION, form.get("next_edition")),
     website: text(form.get("website"), 200),
-    referred_by: text(form.get("ref"), 80),
+    referred_by: await validRef(text(form.get("ref"), 90)),
   };
 
-  // Insert with a unique slug (lagoon-shorts, lagoon-shorts-2, …)
+  // Insert with a unique slug (lagoon-shorts, lagoon-shorts-2, …) and an invite code (lagoon-shorts-k7x2)
   const base = slugify(festivalName);
   let created: { slug: string; edit_token: string } | null = null;
   for (let i = 0; i < 6 && !created; i++) {
     const slug = i === 0 ? base : `${base}-${i + 1}`;
-    const { data, error } = await client.from("festivals").insert({ ...row, slug }).select("slug, edit_token").single();
+    const ref_code = `${base.slice(0, 80)}-${shortCode()}`;
+    const { data, error } = await client.from("festivals").insert({ ...row, slug, ref_code }).select("slug, edit_token").single();
     if (!error) created = data;
     else if (error.code === "23505" && error.message.includes("email"))
       return { error: "This email is already on the waitlist. We'll be in touch at launch.", field: "email" };
@@ -70,6 +71,21 @@ export async function joinWaitlist(_prev: JoinState, form: FormData): Promise<Jo
   revalidatePath("/");
   revalidatePath("/directory");
   redirect(`/join/done?f=${created.slug}&t=${created.edit_token}`);
+}
+
+/** 4 characters from an unambiguous alphabet (no 0/o, 1/l). */
+function shortCode(): string {
+  const abc = "abcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(4));
+  return Array.from(bytes, (b) => abc[b % abc.length]).join("");
+}
+
+/** Keep a referral only if it is a real festival's invite code. */
+async function validRef(ref: string | null): Promise<string | null> {
+  const client = db();
+  if (!client || !ref || !/^[a-z0-9-]{4,90}$/.test(ref)) return null;
+  const { data } = await client.from("festivals").select("ref_code").eq("ref_code", ref).maybeSingle();
+  return data?.ref_code ?? null;
 }
 
 export async function saveHeadache(form: FormData): Promise<{ ok: boolean }> {

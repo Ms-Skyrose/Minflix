@@ -16,10 +16,19 @@ Built with Next.js (App Router) + Tailwind CSS, with Supabase for data.
 | `/f/<slug>/card.png` | The 1080×1350 share card image |
 | `/opengraph-image` | Link preview for the site, with the live count |
 
+### Invite codes
+
+Every festival gets a `ref_code`: its name plus 4 characters, e.g. `lagoon-shorts-festival-k7x2`. Its invite link is `/join?ref=<ref_code>`; a signup through it stores that code in `referred_by` (unknown codes are ignored).
+
+### Festival season calendar
+
+The "Festival season" cards on the landing page are built from the quarter each festival picks for its next edition (Q4 2026 to Q4 2027). Quarters with no festivals are skipped; a "Your festival here" card always closes the row.
+
 ### Rules built in
 
 - **Counts only show from 12 up.** The hero, CTA, directory and link preview hide the number until there are at least 12 festivals (`MIN_PUBLIC_COUNT` in `src/lib/format.ts`), so a small or empty list never looks like a placeholder.
 - **The count animates** from 0 to the real total when it scrolls into view.
+- **Fresh within 10 seconds:** pages revalidate every 10 seconds, and a new signup refreshes them immediately.
 - **"Joining now"** lists the 3 most recent signups. A relative time ("9m ago") shows only if they joined within the last 5 days.
 - **Privacy:** emails are never sent to the browser. All reads and writes go through the server with the service-role key; the table has row-level security on and no public policies.
 
@@ -36,6 +45,10 @@ Built with Next.js (App Router) + Tailwind CSS, with Supabase for data.
 5. **Deploy**: import the repo on Vercel and add the same three environment variables.
 
 Without the Supabase variables the site still renders (with no festivals yet), and the form explains that the waitlist isn't connected.
+
+**Layout preview:** `DEMO_DATA=1 npm run build && DEMO_DATA=1 npm start` fills the pages with sample festivals so you can check layouts. It only works when `SUPABASE_URL` is not set, so it can never show sample data in production.
+
+**Supabase project:** `minflix-events` (ref `qrdpcwngfsjgjgdzecph`, London). Live domain: `events.minflix.com`; set the Vercel function region to London (`lhr1`).
 
 ## Viewing signups
 
