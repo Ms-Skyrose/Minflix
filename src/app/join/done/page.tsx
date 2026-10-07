@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Arrow, FestivalTile, Nav } from "@/components/brand";
+import { Arrow, Nav } from "@/components/brand";
 import { CopyLink } from "@/components/copy-link";
 import { getFestival } from "@/lib/data";
 import { siteUrl } from "@/lib/format";
 import { Headache } from "./headache";
+import { CardActions } from "./card-actions";
 
 export const metadata: Metadata = { title: "You're on the Minflix Events list", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -30,14 +31,24 @@ export default async function DonePage({ searchParams }: { searchParams: Promise
 
           {festival && (
             <>
-              <Link href={`/f/${festival.slug}`} className="glass-soft flex items-center gap-3.5 rounded-[18px] p-3">
-                <FestivalTile name={festival.festival_name} logo={festival.logo_url} size={56} />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="font-semibold">Tell your audience</span>
-                  <span className="text-[13px] text-fog">Your share card for {festival.festival_name} is ready to post</span>
-                </span>
-                <Arrow />
-              </Link>
+              <section aria-labelledby="card-heading" className="flex flex-col gap-3 border-t border-dashed border-white/20 pt-5">
+                <div className="flex flex-col gap-0.5">
+                  <h2 id="card-heading" className="m-0 text-lg font-bold">Your festival card is ready</h2>
+                  <span className="text-[13px] text-fog">Post it on your socials to tell your audience you&apos;re coming to Minflix Events.</span>
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/f/${festival.slug}/card.png`} alt={`${festival.festival_name}: our next edition is coming to Minflix Events`}
+                  width={1080} height={1350} className="mx-auto w-full max-w-[340px] rounded-[20px] shadow-[0_24px_48px_-28px_rgba(0,0,0,0.9)]" />
+                <CardActions
+                  src={`/f/${festival.slug}/card.png`}
+                  filename={`${festival.slug}-minflix-events.png`}
+                  title={`${festival.festival_name}: our next edition is coming to Minflix Events`}
+                  pageUrl={`${siteUrl()}/f/${festival.slug}`}
+                />
+                <Link href={`/f/${festival.slug}`} className="inline-flex items-center gap-1.5 self-start text-[13px] text-mist underline">
+                  Open your festival&apos;s card page <Arrow />
+                </Link>
+              </section>
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-semibold">Know another festival getting ready for its next edition?</span>
                 <CopyLink url={`${siteUrl()}/join?ref=${festival.ref_code}`} label="Invite to Minflix Festival Network" />

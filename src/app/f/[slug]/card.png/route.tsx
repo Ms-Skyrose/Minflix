@@ -1,6 +1,9 @@
 import { ImageResponse } from "next/og";
 import { getFestival } from "@/lib/data";
 import { ShareCard } from "@/lib/og";
+import { ogFonts } from "@/lib/og-fonts";
+
+export const runtime = "nodejs";
 import { siteUrl } from "@/lib/format";
 
 /** The festival's 1080×1350 share card as a PNG, ready to post or download. */
@@ -12,6 +15,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   return new ImageResponse(<ShareCard name={f.festival_name} logo={f.logo_url} link={link} />, {
     width: 1080,
     height: 1350,
+    fonts: await ogFonts(),
     headers: { "Cache-Control": "public, max-age=300", "Content-Disposition": `inline; filename="${f.slug}-minflix-events.png"` },
   });
 }
