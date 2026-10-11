@@ -8,28 +8,41 @@ export const runtime = "nodejs";
 const describe = (err: unknown) => (err instanceof Error ? `${err.name}: ${err.message}\n${(err.stack ?? "").split("\n").slice(1, 6).join("\n")}` : String(err));
 
 /**
- * The festival's 1080×1350 share card as a PNG. The printed link uses the domain the card was requested on.
- * `?debug=1` returns the error text instead of a 500 page, so failures can be diagnosed from a phone.
+ * A festival's share card as a PNG.
+ *   ?size=story  → 1080×1920 for WhatsApp Status / Instagram Stories (default: 1080×1350 feed post)
+ *   ?download=1  → sent as a file download
+ *   ?debug=1     → plain-text report of each step and any error, for diagnosing a server
+ * The link printed on the card uses the domain the card was requested on.
  */
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
-  const debug = new URL(req.url).searchParams.has("debug");
-  const steps: string[] = [];
+  const url = new URL(req.url);
+  const debug = url.searchParams.has("debug");
+  const story = url.searchParams.get("size") === "story";
+  const download = url.searchParams.has("download");
+  const steps: string[] = [`size: ${story ? "story 1080x1920" : "post 1080x1350"}`];
   try {
     const { slug } = await params;
     const f = await getFestival(slug);
     steps.push(`festival: ${f ? "found" : "missing"}`);
-    if (!f) return new Response("Not found", { status: 404 });
+    if (!f) return new Response(debug ? steps.join("\n") : "Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
 
-    const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? new URL(req.url).host;
+    const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? url.host;
     const link = `${host}/f/${f.slug}`;
     const [fonts, logo] = await Promise.all([ogFonts(), logoForCard(f.logo_url)]);
     steps.push(`fonts: ${fonts.length}`, `logo: ${f.logo_url ? (logo ? "converted" : "failed → initials") : "none"}`);
-    const headers = { "Cache-Control": "public, max-age=300", "Content-Type": "image/png", "Content-Disposition": `inline; filename="${f.slug}-minflix-events.png"` };
 
-    const render = async (withLogo: string | null) => {
-      const img = new ImageResponse(<ShareCard name={f.festival_name} logo={withLogo} link={link} />, { width: 1080, height: 1350, fonts });
-      return img.arrayBuffer(); // render fully here so errors are caught, not mid-stream
+    const filename = `${f.slug}-minflix-events${story ? "-status" : ""}.png`;
+    const headers = {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=300",
+      "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${filename}"`,
     };
+    const render = async (withLogo: string | null) =>
+      new ImageResponse(<ShareCard name={f.festival_name} logo={withLogo} link={link} story={story} />, {
+        width: 1080,
+        height: story ? 1920 : 1350,
+        fonts,
+      }).arrayBuffer(); // render fully here so errors are caught, not mid-stream
 
     let body: ArrayBuffer;
     try {

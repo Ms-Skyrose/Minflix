@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Arrow, FestivalTile, Footer, Nav } from "@/components/brand";
+import { Arrow, FestivalTile, Footer, InstagramHelp, Nav } from "@/components/brand";
+import { CardPanel } from "@/components/card-panel";
 import { CopyLink } from "@/components/copy-link";
 import { countryName, getFestival } from "@/lib/data";
 
@@ -32,9 +33,6 @@ export default async function FestivalCardPage({ params }: Props) {
       <div className="orb -left-40 top-[600px] size-[420px] bg-blue/35" />
       <Nav />
       <section className="relative mx-auto flex max-w-[1100px] flex-wrap items-start gap-10 px-4 pb-20 pt-8">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/f/${f.slug}/card.png`} alt={`${f.festival_name}: our next edition is coming to Minflix Events`} width={1080} height={1350}
-          className="w-full max-w-[460px] flex-[1_1_320px] rounded-[28px] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)]" />
         <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-5">
           <span className="flex items-center gap-3.5">
             <FestivalTile name={f.festival_name} logo={f.logo_url} size={56} />
@@ -46,11 +44,13 @@ export default async function FestivalCardPage({ params }: Props) {
           <h1 className="display m-0 text-[clamp(30px,4vw,46px)]">Our next edition is coming to <span className="text-magenta">Minflix Events.</span></h1>
           <p className="m-0 text-lg text-mist">A new home for our festival.</p>
           <Link href={`/join?ref=${f.ref_code}`} className="btn-blue self-start">Join Minflix to be notified <Arrow /></Link>
-          <div className="glass mt-4 flex flex-col gap-3 rounded-3xl p-5">
-            <span className="font-semibold">Share this card</span>
-            <CopyLink path={`/f/${f.slug}`} label="Copy card link" shareText={`${f.festival_name}: our next edition is coming to Minflix Events`} />
-            <a href={`/f/${f.slug}/card.png`} download className="text-center text-sm font-semibold underline">Download image</a>
-          </div>
+        </div>
+        <div id="card" className="glass flex min-w-0 flex-[1_1_340px] scroll-mt-6 flex-col gap-3 rounded-3xl p-5">
+          <span className="font-semibold">Is this your festival? Save your card</span>
+          <CardPanel slug={f.slug} name={f.festival_name} />
+          <span className="mt-1 text-sm font-semibold">Your invite link</span>
+          <CopyLink path={`/join?ref=${f.ref_code}`} label="Invite to Minflix Festival Network" />
+          <InstagramHelp />
         </div>
       </section>
       <Footer />

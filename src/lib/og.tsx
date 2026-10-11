@@ -47,12 +47,16 @@ export function LinkPreview({ total }: { total: number | null }) {
   );
 }
 
-/** 1080×1350 share card a festival posts after joining. */
-export function ShareCard({ name, logo, link }: { name: string; logo: string | null; link: string }) {
+/**
+ * Share card a festival posts after joining.
+ * post: 1080×1350 (Instagram/Facebook feed, 4:5). story: 1080×1920 (WhatsApp Status, Instagram/TikTok Stories, 9:16),
+ * with the text kept clear of the top and bottom bars those apps draw over stories.
+ */
+export function ShareCard({ name, logo, link, story = false }: { name: string; logo: string | null; link: string; story?: boolean }) {
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: INK, color: "#fff", fontFamily: "Poppins", position: "relative" }}>
       <div style={{ position: "absolute", right: -200, top: -200, width: 700, height: 700, borderRadius: 999, background: "rgba(228,0,236,0.35)", filter: "blur(90px)" }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 56, padding: "96px 96px 0", flex: 1 }}>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: story ? "center" : "flex-start", gap: story ? 72 : 56, padding: story ? "240px 96px 80px" : "96px 96px 0", flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -64,7 +68,7 @@ export function ShareCard({ name, logo, link }: { name: string; logo: string | n
             <span>NEXT EDITION</span><span>ON MINFLIX EVENTS</span>
           </div>
         </div>
-        <span style={{ fontSize: name.length > 28 ? 84 : 104, fontWeight: 800, fontStyle: "italic", lineHeight: 0.98 }}>{name}</span>
+        <span style={{ fontSize: name.length > 28 ? (story ? 92 : 84) : story ? 116 : 104, fontWeight: 800, fontStyle: "italic", lineHeight: 0.98 }}>{name}</span>
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           <div style={{ display: "flex", flexWrap: "wrap", fontSize: 58, fontWeight: 800, fontStyle: "italic", lineHeight: 1.08 }}>
             <span>Our next edition is coming to&nbsp;</span><span style={{ color: MAGENTA }}>Minflix Events.</span>
@@ -72,7 +76,7 @@ export function ShareCard({ name, logo, link }: { name: string; logo: string | n
           <span style={{ fontSize: 38, color: "#C9D6DB" }}>A new home for our festival.</span>
         </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 28, background: "#fff", color: INK, borderRadius: "120px 120px 0 0", padding: "72px 96px 80px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 28, background: "#fff", color: INK, borderRadius: "120px 120px 0 0", padding: story ? "80px 96px 300px" : "72px 96px 80px" }}>
         <span style={{ fontSize: 32, fontWeight: 600, lineHeight: 1.3, maxWidth: 760 }}>Join Minflix to be notified when we&apos;re live on Minflix</span>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <div style={{ display: "flex", background: INK, borderRadius: 999, padding: "18px 30px" }}><Wordmark size={28} /></div>

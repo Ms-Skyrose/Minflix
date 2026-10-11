@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Arrow, FestivalTile, Footer, Nav } from "@/components/brand";
+import { Arrow, FestivalTile, Footer, InstagramHelp, Nav } from "@/components/brand";
+import { CardPanel } from "@/components/card-panel";
+import { CopyLink } from "@/components/copy-link";
 import { CountUp } from "@/components/count-up";
 import { CONTINENTS, FESTIVAL_TYPES } from "@/lib/countries";
 import { countryName, getDirectory, getTotal, type Festival } from "@/lib/data";
@@ -103,21 +105,25 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
         </div>
 
         {selected && (
-          <aside id="details" aria-label="Festival details" className="flex min-w-0 flex-[1_1_340px] scroll-mt-6 flex-col gap-4.5 rounded-3xl bg-white p-6.5 text-ink">
-            <FestivalTile name={selected.festival_name} logo={selected.logo_url} size={72} />
+          <aside id="details" aria-label="Festival details" className="glass flex min-w-0 flex-[1_1_340px] scroll-mt-6 flex-col gap-4.5 rounded-3xl p-5 sm:p-6.5">
+            <FestivalTile name={selected.festival_name} logo={selected.logo_url} size={64} />
             <h2 className="display m-0 text-[28px]">{selected.festival_name}</h2>
             <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-3 text-[15px]">
-              <dt className="text-slate">Country</dt><dd className="m-0 font-semibold">{countryName(selected.country_code)}</dd>
-              <dt className="text-slate">Festival type</dt><dd className="m-0 font-semibold">{selected.festival_type ?? "Not given"}</dd>
-              <dt className="text-slate">Next edition</dt><dd className="m-0 font-semibold">{selected.next_edition ?? "Not set yet"}</dd>
-              <dt className="text-slate">Website/social</dt>
+              <dt className="text-fog">Country</dt><dd className="m-0 font-semibold">{countryName(selected.country_code)}</dd>
+              <dt className="text-fog">Festival type</dt><dd className="m-0 font-semibold">{selected.festival_type ?? "Not given"}</dd>
+              <dt className="text-fog">Next edition</dt><dd className="m-0 font-semibold">{selected.next_edition ?? "Not set yet"}</dd>
+              <dt className="text-fog">Website/social</dt>
               <dd className="m-0 break-words font-semibold">
-                {selected.website ? <a href={hrefFor(selected.website)} target="_blank" rel="noopener nofollow" className="text-[#0A5FB8] underline">{displayUrl(selected.website)}</a> : "Not given"}
+                {selected.website ? <a href={hrefFor(selected.website)} target="_blank" rel="noopener nofollow" className="text-[#7FC1FF] underline">{displayUrl(selected.website)}</a> : "Not given"}
               </dd>
             </dl>
-            <div className="flex flex-col gap-2.5 border-t border-dashed border-[#C3CDD2] pt-4">
-              <span className="text-[13px] text-slate">Getting ready for Minflix Events</span>
-              <Link href={`/f/${selected.slug}`} className="rounded-full bg-ink py-3 text-center font-semibold text-white">View festival card</Link>
+            <div className="flex flex-col gap-3 border-t border-dashed border-white/20 pt-4">
+              <span className="font-semibold">Is this your festival?</span>
+              <span className="text-[13px] text-fog">Save your festival card and share your invite link.</span>
+              <CardPanel slug={selected.slug} name={selected.festival_name} />
+              <span className="mt-1 text-sm font-semibold">Your invite link</span>
+              <CopyLink path={`/join?ref=${selected.ref_code}`} label="Invite to Minflix Festival Network" />
+              <InstagramHelp label="Something wrong in this listing? Message us on Instagram" />
             </div>
           </aside>
         )}

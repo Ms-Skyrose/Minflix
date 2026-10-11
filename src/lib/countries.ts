@@ -44,7 +44,21 @@ export const FESTIVAL_TYPES = [
 
 export const FILMS_PER_EDITION = ["Under 25", "25–100", "100–300", "300+", "First edition, not sure yet"] as const;
 
-export const NEXT_EDITION = ["Q4 2026", "Q1 2027", "Q2 2027", "Q3 2027", "Q4 2027", "Not set yet"] as const;
+/** Quarters festivals can pick for their next edition: this quarter and the next five (rolls forward on its own). */
+export function upcomingQuarters(now = new Date(), count = 6): string[] {
+  let q = Math.floor(now.getUTCMonth() / 3) + 1;
+  let y = now.getUTCFullYear();
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) {
+    out.push(`Q${q} ${y}`);
+    q = q === 4 ? 1 : q + 1;
+    if (q === 1) y += 1;
+  }
+  return out;
+}
+
+export const NOT_SET = "Not set yet";
+export const nextEditionOptions = (now = new Date()) => [...upcomingQuarters(now), NOT_SET];
 
 export const HEADACHES = [
   "Submissions",

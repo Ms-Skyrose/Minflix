@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "./supabase";
-import { codesIn, COUNTRIES, countryByCode, NEXT_EDITION } from "./countries";
+import { codesIn, COUNTRIES, countryByCode, upcomingQuarters } from "./countries";
 import { DEMO, demoOn } from "./demo";
 
 export type Festival = {
@@ -18,11 +18,34 @@ export type Festival = {
 // ref_code is public on purpose: it is what goes in a festival's invite link.
 const PUBLIC_COLUMNS = "slug, ref_code, created_at, festival_name, country_code, logo_url, festival_type, next_edition, website";
 
+/**
+ * Every public read goes through `guarded`: if the database is slow (over 4 s) or errors, the page still
+ * renders with an empty fallback instead of an error screen. Failures are logged on the server.
+ */
+function guarded<A extends unknown[], R>(name: string, fn: (...a: A) => Promise<R>, fallback: () => R) {
+  return async (...args: A): Promise<R> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        fn(...args),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error("timed out after 4s")), 4000);
+        }),
+      ]);
+    } catch (err) {
+      console.error(`[data] ${name} failed, showing fallback:`, err instanceof Error ? err.message : err);
+      return fallback();
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+}
+
 /** No database yet: sample festivals in local preview mode, otherwise nothing. */
 const offline = (): Festival[] => (demoOn() ? DEMO : []);
 
 /** Total listed festivals. */
-export async function getTotal(): Promise<number> {
+async function _getTotal(): Promise<number> {
   const client = db();
   if (!client) return offline().length;
   const { count, error } = await client.from("festivals").select("id", { count: "exact", head: true }).eq("listed", true);
@@ -31,7 +54,7 @@ export async function getTotal(): Promise<number> {
 }
 
 /** The most recent signups for the "Joining now" card. */
-export async function getRecent(limit = 3): Promise<Festival[]> {
+async function _getRecent(limit = 3): Promise<Festival[]> {
   const client = db();
   if (!client) return [...offline()].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, limit);
   const { data, error } = await client
@@ -48,11 +71,15 @@ export async function getRecent(limit = 3): Promise<Festival[]> {
 // Africa: Nigeria (Nollywood) · North America: United States · Asia: India · Europe: France
 // South America: Brazil · Oceania: Australia
 const FOCUS = ["NG", "US", "IN", "FR", "BR", "AU"];
+const focusRank = (code: string) => {
+  const i = FOCUS.indexOf(code);
+  return i === -1 ? FOCUS.length : i;
+};
 
 export type CountryRow ={ code: string; name: string; festivals: number; rank: number | null };
 
 /** Every country with its festival count, most festivals first, then A–Z. */
-export async function getLeaderboard(): Promise<CountryRow[]> {
+async function _getLeaderboard(): Promise<CountryRow[]> {
   const counts = new Map<string, number>();
   const client = db();
   if (client) {
@@ -63,10 +90,7 @@ export async function getLeaderboard(): Promise<CountryRow[]> {
     for (const f of offline()) counts.set(f.country_code, (counts.get(f.country_code) ?? 0) + 1);
   }
   // Most festivals first; ties go to each continent's leading film market, then A–Z.
-  const focus = (code: string) => {
-    const i = FOCUS.indexOf(code);
-    return i === -1 ? FOCUS.length : i;
-  };
+  const focus = focusRank;
   const rows = COUNTRIES.map((c) => ({ code: c.code, name: c.name, festivals: counts.get(c.code) ?? 0 })).sort(
     (a, b) => b.festivals - a.festivals || focus(a.code) - focus(b.code) || a.name.localeCompare(b.name),
   );
@@ -75,7 +99,7 @@ export async function getLeaderboard(): Promise<CountryRow[]> {
 
 export type DirectoryQuery = { q?: string; continent?: string; type?: string };
 
-export async function getDirectory({ q, continent, type }: DirectoryQuery, limit = 60): Promise<Festival[]> {
+async function _getDirectory({ q, continent, type }: DirectoryQuery, limit = 60): Promise<Festival[]> {
   const client = db();
   const inContinent = codesIn(continent);
   const term = (q ?? "").replace(/[%,()]/g, " ").trim();
@@ -104,7 +128,7 @@ export async function getDirectory({ q, continent, type }: DirectoryQuery, limit
   return data ?? [];
 }
 
-export async function getFestival(slug: string): Promise<Festival | null> {
+async function _getFestival(slug: string): Promise<Festival | null> {
   const client = db();
   if (!client) return offline().find((f) => f.slug === slug) ?? null;
   const { data, error } = await client.from("festivals").select(PUBLIC_COLUMNS).eq("slug", slug).eq("listed", true).maybeSingle();
@@ -115,9 +139,9 @@ export async function getFestival(slug: string): Promise<Festival | null> {
 export type Season = { quarter: string; festivals: Festival[]; total: number };
 
 /** Upcoming editions grouped by the quarter each festival gave, in calendar order. */
-export async function getSeason(perQuarter = 3): Promise<Season[]> {
+async function _getSeason(perQuarter = 3): Promise<Season[]> {
   const client = db();
-  const quarters = NEXT_EDITION.filter((q) => q.startsWith("Q"));
+  const quarters = upcomingQuarters();
   let rows: Festival[];
   if (!client) rows = offline().filter((f) => f.next_edition && quarters.some((q) => q === f.next_edition));
   else {
@@ -142,3 +166,39 @@ export async function getSeason(perQuarter = 3): Promise<Season[]> {
 export function countryName(code: string): string {
   return countryByCode(code)?.name ?? code;
 }
+
+export const getTotal = guarded("getTotal", _getTotal, () => 0);
+export const getRecent = guarded("getRecent", _getRecent, () => []);
+export const getLeaderboard = guarded("getLeaderboard", _getLeaderboard, (): CountryRow[] =>
+  COUNTRIES.map((c) => ({ code: c.code, name: c.name, festivals: 0, rank: null })).sort(
+    (a, b) => focusRank(a.code) - focusRank(b.code) || a.name.localeCompare(b.name),
+  ),
+);
+export const getDirectory = guarded("getDirectory", _getDirectory, () => []);
+export const getFestival = guarded("getFestival", _getFestival, () => null);
+export const getSeason = guarded("getSeason", _getSeason, () => []);
+
+/**
+ * A festival seen by the person who just joined: works even if the listing is held back for review,
+ * but only with the private edit token from their own signup.
+ */
+export const getOwnFestival = guarded(
+  "getOwnFestival",
+  async (slug: string, token: string): Promise<(Festival & { listed: boolean; flag_reason: string | null }) | null> => {
+    const client = db();
+    if (!client) {
+      const f = offline().find((x) => x.slug === slug);
+      return f ? { ...f, listed: true, flag_reason: null } : null;
+    }
+    if (!/^[0-9a-f-]{36}$/i.test(token)) return null;
+    const { data, error } = await client
+      .from("festivals")
+      .select(`${PUBLIC_COLUMNS}, listed, flag_reason`)
+      .eq("slug", slug)
+      .eq("edit_token", token)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+  () => null,
+);
