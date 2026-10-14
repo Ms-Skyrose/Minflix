@@ -59,22 +59,16 @@ export async function joinWaitlist(_prev: JoinState, form: FormData): Promise<Jo
   // Retention promised in the privacy notice: spam-check records are kept 7 days.
   if (Math.random() < 0.05) await client.from("signup_attempts").delete().lt("created_at", since(7 * 86_400_000));
 
-  // 4. Already on the list? Send them back to their card and invite link instead of an error
-  const { data: existing } = await client.from("festivals").select("slug, listed").eq("email", email).maybeSingle();
-  if (existing) {
-    if (existing.listed) redirect(`/join/done?f=${existing.slug}&again=1`);
-    return { error: "This email is already on the waitlist. Your listing is still being checked; message us on Instagram @minflix to speed it up.", field: "email" };
-  }
-
-  // 5. Optional logo: up to 3 MB, resized on the server to a small PNG
-  let logoUrl: string | null = null;
   const logo = form.get("logo");
-  if (logo instanceof File && logo.size > 0) {
+  const hasLogo = logo instanceof File && logo.size > 0;
+  if (hasLogo) {
     if (!["image/png", "image/jpeg", "image/webp"].includes(logo.type)) return { error: "Logo must be a PNG, JPG or WebP image.", field: "logo" };
     if (logo.size > MAX_LOGO_BYTES) return { error: "Logo must be 3 MB or smaller.", field: "logo" };
+  }
+  const saveLogo = async (): Promise<string | { error: string; field: string }> => {
     try {
       const sharp = (await import("sharp")).default;
-      const png = await sharp(Buffer.from(await logo.arrayBuffer()))
+      const png = await sharp(Buffer.from(await (logo as File).arrayBuffer()))
         .rotate()
         .resize(600, 600, { fit: "inside", withoutEnlargement: true })
         .png({ compressionLevel: 9 })
@@ -82,11 +76,35 @@ export async function joinWaitlist(_prev: JoinState, form: FormData): Promise<Jo
       const path = `${slugify(festivalName)}-${crypto.randomUUID().slice(0, 8)}.png`;
       const { error } = await client.storage.from(LOGO_BUCKET).upload(path, png, { contentType: "image/png" });
       if (error) throw error;
-      logoUrl = client.storage.from(LOGO_BUCKET).getPublicUrl(path).data.publicUrl;
+      return client.storage.from(LOGO_BUCKET).getPublicUrl(path).data.publicUrl;
     } catch (err) {
       console.error("logo upload failed", err);
       return { error: "We couldn't use that logo. Try another image or skip it.", field: "logo" };
     }
+  };
+
+  // 4. Already on the list? Send them back to their card and invite link instead of an error.
+  //    If their listing has no logo yet and they've added one now, save it (an existing logo is never replaced).
+  const { data: existing } = await client.from("festivals").select("id, slug, listed, logo_url").eq("email", email).maybeSingle();
+  if (existing) {
+    if (hasLogo && !existing.logo_url) {
+      const url = await saveLogo();
+      if (typeof url !== "string") return url;
+      await client.from("festivals").update({ logo_url: url }).eq("id", existing.id).is("logo_url", null);
+      revalidatePath("/");
+      revalidatePath("/directory");
+      revalidatePath(`/f/${existing.slug}`);
+    }
+    if (existing.listed) redirect(`/join/done?f=${existing.slug}&again=1`);
+    return { error: "This email is already on the waitlist. Your listing is still being checked; message us on Instagram @minflix to speed it up.", field: "email" };
+  }
+
+  // 5. Optional logo: up to 3 MB, resized on the server to a small PNG
+  let logoUrl: string | null = null;
+  if (hasLogo) {
+    const url = await saveLogo();
+    if (typeof url !== "string") return url;
+    logoUrl = url;
   }
 
   // 6. Save. Famous festival names are saved but held back from the public site until checked.
