@@ -39,6 +39,7 @@ export default function PrivacyPage() {
             <li><b>How you found us:</b> the campaign tag in the link you used, the site that linked you, or the festival that invited you.</li>
             <li><b>Your consent:</b> the date you agreed to this notice.</li>
             <li><b>Visits:</b> which pages are viewed, counted without cookies. We store a code made from your network address, browser and the date that changes every day and can&apos;t be turned back into your address. We never store your IP address. If your browser sends &ldquo;Do Not Track&rdquo; or Global Privacy Control, we don&apos;t count your visit.</li>
+            <li><b>Error reports:</b> if a page fails on your device, the error message, the step it happened at and your browser type, kept for 30 days. Nothing you typed is included.</li>
             <li><b>Spam protection:</b> a one-way code of your network address when you submit the form, kept for 7 days, to limit repeated signups.</li>
           </ul>
         </Section>

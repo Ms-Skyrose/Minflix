@@ -5,9 +5,10 @@ import { joinWaitlist, type JoinState } from "@/app/actions";
 import { COUNTRIES, FESTIVAL_TYPES, FILMS_PER_EDITION } from "@/lib/countries";
 import { Arrow } from "@/components/brand";
 import { readSource } from "@/components/source";
+import { ImageReadError, reportClientError, shrinkImage } from "@/lib/shrink-image";
 
 const Opt = () => <span className="font-normal text-fog"> (optional)</span>;
-const MAX_LOGO = 3 * 1024 * 1024;
+const MAX_LOGO = 25 * 1024 * 1024; // the original can be big: it's shrunk on the phone before sending
 const DRAFT_KEY = "mf_join_draft";
 const RELOAD_KEY = "mf_join_reloaded";
 const DRAFT_FIELDS = ["email", "festival_name", "country", "festival_type", "films_per_edition", "next_edition", "website"];
@@ -22,6 +23,9 @@ export function JoinForm({ refSlug, stamp, quarters, defaultCountry }: { refSlug
   const [type, setType] = useState<string>("");
   const [logoName, setLogoName] = useState<string>("");
   const [logoError, setLogoError] = useState<string>("");
+  const [logo, setLogo] = useState<{ blob: Blob; name: string } | null>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [offerNoLogo, setOfferNoLogo] = useState(false);
   const [src, setSrc] = useState<Record<string, string>>({});
   useEffect(() => setSrc(readSource()), []);
   const bad = (f: string) => (state.field === f ? true : undefined);
@@ -64,18 +68,22 @@ export function JoinForm({ refSlug, stamp, quarters, defaultCountry }: { refSlug
   }, [type]);
 
   // Calls the server directly so a failed or unreadable reply shows a message here instead of crashing the page.
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (logoError || pending) return;
+  async function send(withLogo: boolean) {
+    if (logoError || pending || logoBusy || !formRef.current) return;
     saveDraft();
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData(formRef.current);
+    // Never send the picked file itself: send the small copy made when it was picked.
+    fd.delete("logo");
+    if (withLogo && logo) fd.set("logo", logo.blob, logo.name);
     setPending(true);
     setState({});
+    setOfferNoLogo(false);
     try {
       const result = await joinWaitlist({}, fd); // on success the server redirects to the "You're on the list" screen
       if (result?.error) setState(result);
     } catch (err) {
       console.error("join failed", err);
+      reportClientError(withLogo && logo ? "join-with-logo" : "join", err);
       if (isStalePage(err)) {
         try {
           if (!sessionStorage.getItem(RELOAD_KEY)) {
@@ -87,10 +95,20 @@ export function JoinForm({ refSlug, stamp, quarters, defaultCountry }: { refSlug
           /* fall through to the message */
         }
       }
-      setState({ error: "We couldn't send that just now. Check your connection and tap Done again. Your details are still here." });
+      if (withLogo && logo) {
+        setOfferNoLogo(true);
+        setState({ error: "We couldn't send that with your logo from this phone. Tap Done to try again, or join without the logo and send it to us on Instagram later." });
+      } else {
+        setState({ error: "We couldn't send that just now. Check your connection and tap Done again. Your details are still here." });
+      }
     } finally {
       setPending(false);
     }
+  }
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    void send(true);
   }
 
   return (
@@ -124,21 +142,38 @@ export function JoinForm({ refSlug, stamp, quarters, defaultCountry }: { refSlug
             <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6M4 20h16" fill="none" stroke="#F27BF5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </span>
           <span className="flex min-w-0 flex-col">
-            <span className="truncate font-medium">{logoName || "Upload your festival logo"}</span>
-            <span className="text-[13px] text-fog">PNG, JPG or WebP, up to 3 MB. Used on your share card.</span>
+            <span className="truncate font-medium">{logoBusy ? "Preparing your logo…" : logoName || "Upload your festival logo"}</span>
+            <span className="text-[13px] text-fog">PNG, JPG or WebP. Any size, we resize it for you. Used on your share card.</span>
           </span>
         </label>
         <input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" className="sr-only"
-          onChange={(e) => {
-            const file = e.currentTarget.files?.[0];
-            if (file && file.size > MAX_LOGO) {
-              setLogoError(`That image is ${(file.size / 1048576).toFixed(1)} MB. Choose one that's 3 MB or smaller.`);
-              setLogoName("");
-              e.currentTarget.value = "";
+          onChange={async (e) => {
+            const input = e.currentTarget;
+            const file = input.files?.[0];
+            setLogoError("");
+            setLogo(null);
+            setLogoName("");
+            if (!file) return;
+            if (file.size > MAX_LOGO) {
+              setLogoError(`That image is ${(file.size / 1048576).toFixed(0)} MB. Choose a smaller one.`);
+              input.value = "";
               return;
             }
-            setLogoError("");
-            setLogoName(file?.name ?? "");
+            setLogoBusy(true);
+            try {
+              setLogo(await shrinkImage(file));
+              setLogoName(file.name || "Your logo");
+            } catch (err) {
+              reportClientError("logo-read", err);
+              setLogoError(
+                err instanceof ImageReadError
+                  ? "We couldn't open that image on this phone. Choose another one, or save it to your phone first (for example from Google Photos) and pick it again."
+                  : "We couldn't use that image. Try a PNG or JPG.",
+              );
+            } finally {
+              input.value = ""; // the small copy is kept in memory; don't hold on to the original file
+              setLogoBusy(false);
+            }
           }} />
         {logoError && <p role="alert" className="m-0 text-[13px] text-[#FF8A80]">{logoError}</p>}
       </div>
@@ -205,7 +240,12 @@ export function JoinForm({ refSlug, stamp, quarters, defaultCountry }: { refSlug
       </div>
 
       {state.error && <p role="alert" className="m-0 text-sm text-[#FF8A80]">{state.error}</p>}
-      <button type="submit" disabled={pending} className="btn-blue mt-1 text-[17px]">
+      {offerNoLogo && !pending && (
+        <button type="button" onClick={() => void send(false)} className="glass-soft min-h-[52px] rounded-full px-5 font-semibold">
+          Join without logo
+        </button>
+      )}
+      <button type="submit" disabled={pending || logoBusy} className="btn-blue mt-1 text-[17px]">
         {pending ? <span key="saving">Saving…</span> : <span key="done" className="inline-flex items-center gap-2.5">Done <Arrow /></span>}
       </button>
       <p className="m-0 text-center text-xs text-[#8FA4AD]">
