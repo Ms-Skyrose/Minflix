@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { joinWaitlist, type JoinState } from "@/app/actions";
 import { COUNTRIES, FESTIVAL_TYPES, FILMS_PER_EDITION } from "@/lib/countries";
 import { Arrow } from "@/components/brand";
@@ -8,10 +8,17 @@ import { readSource } from "@/components/source";
 
 const Opt = () => <span className="font-normal text-fog"> (optional)</span>;
 const MAX_LOGO = 3 * 1024 * 1024;
+const DRAFT_KEY = "mf_join_draft";
+const RELOAD_KEY = "mf_join_reloaded";
+const DRAFT_FIELDS = ["email", "festival_name", "country", "festival_type", "films_per_edition", "next_edition", "website"];
+
+/** True when the page is older than the server (a redeploy happened while the form was open). */
+const isStalePage = (err: unknown) => /server action|failed-to-find|not found on the server/i.test(String((err as Error)?.message ?? err));
 
 export function JoinForm({ refSlug, stamp, quarters, defaultCountry }: { refSlug?: string; stamp: string; quarters: string[]; defaultCountry?: string }) {
-  const [state, action, pending] = useActionState<JoinState, FormData>(joinWaitlist, {});
-  const [, startTransition] = useTransition();
+  const [state, setState] = useState<JoinState>({});
+  const [pending, setPending] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const [type, setType] = useState<string>("");
   const [logoName, setLogoName] = useState<string>("");
   const [logoError, setLogoError] = useState<string>("");
@@ -19,16 +26,75 @@ export function JoinForm({ refSlug, stamp, quarters, defaultCountry }: { refSlug
   useEffect(() => setSrc(readSource()), []);
   const bad = (f: string) => (state.field === f ? true : undefined);
 
-  // Submit without React's automatic form reset, so nothing typed is lost if there's an error.
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // Restore anything typed before a reload or a failed send (the logo file can't be restored).
+  useEffect(() => {
+    try {
+      const draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "{}") as Record<string, string>;
+      const form = formRef.current;
+      if (!form) return;
+      for (const name of DRAFT_FIELDS) {
+        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLSelectElement | null;
+        if (el && draft[name] && name !== "festival_type") el.value = draft[name];
+      }
+      if (draft.festival_type) setType(draft.festival_type);
+      if (sessionStorage.getItem(RELOAD_KEY)) setState({ error: "The page was updated while you were filling it in. Your details are still here; add your logo again if you had one, then tap Done." });
+      sessionStorage.removeItem(RELOAD_KEY);
+    } catch {
+      /* storage blocked: nothing to restore */
+    }
+  }, []);
+
+  function saveDraft() {
+    try {
+      const fd = new FormData(formRef.current ?? undefined);
+      const draft: Record<string, string> = {};
+      for (const name of DRAFT_FIELDS) {
+        const v = fd.get(name);
+        if (typeof v === "string" && v) draft[name] = v;
+      }
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      /* storage blocked */
+    }
+  }
+
+  // The festival-type buttons don't fire change events, so save the draft when the choice changes too.
+  useEffect(() => {
+    if (formRef.current) saveDraft();
+  }, [type]);
+
+  // Calls the server directly so a failed or unreadable reply shows a message here instead of crashing the page.
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (logoError) return;
+    if (logoError || pending) return;
+    saveDraft();
     const fd = new FormData(e.currentTarget);
-    startTransition(() => action(fd));
+    setPending(true);
+    setState({});
+    try {
+      const result = await joinWaitlist({}, fd); // on success the server redirects to the "You're on the list" screen
+      if (result?.error) setState(result);
+    } catch (err) {
+      console.error("join failed", err);
+      if (isStalePage(err)) {
+        try {
+          if (!sessionStorage.getItem(RELOAD_KEY)) {
+            sessionStorage.setItem(RELOAD_KEY, "1");
+            window.location.reload();
+            return;
+          }
+        } catch {
+          /* fall through to the message */
+        }
+      }
+      setState({ error: "We couldn't send that just now. Check your connection and tap Done again. Your details are still here." });
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
-    <form onSubmit={onSubmit} className="glass relative flex flex-col gap-4.5 rounded-[30px] px-5 py-6 sm:px-7" noValidate>
+    <form ref={formRef} onSubmit={onSubmit} onChange={saveDraft} className="glass relative flex flex-col gap-4.5 rounded-[30px] px-5 py-6 sm:px-7" noValidate>
       <div className="flex flex-col gap-1.5">
         <h1 className="display m-0 text-[clamp(30px,6vw,40px)]">
           Join the Minflix Events <span className="text-magenta-soft">waitlist.</span>
@@ -84,7 +150,7 @@ export function JoinForm({ refSlug, stamp, quarters, defaultCountry }: { refSlug
 
       <fieldset className="m-0 min-w-0 border-0 p-0">
         <legend className="mb-2.5 p-0 text-sm font-semibold">What&apos;s your festival type?<Opt /></legend>
-        <input type="hidden" name="festival_type" value={type} />
+        <input type="hidden" name="festival_type" value={type} readOnly />
         <div className="flex flex-wrap gap-2">
           {FESTIVAL_TYPES.map((t) => {
             const on = type === t;

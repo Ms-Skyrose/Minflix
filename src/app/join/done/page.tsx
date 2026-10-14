@@ -4,6 +4,7 @@ import { Arrow, InstagramHelp, Nav } from "@/components/brand";
 import { CardPanel } from "@/components/card-panel";
 import { CopyLink } from "@/components/copy-link";
 import { getFestival, getOwnFestival } from "@/lib/data";
+import { ClearDraft } from "./clear-draft";
 
 export const metadata: Metadata = { title: "You're on the Minflix Events list", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export default async function DonePage({ searchParams }: { searchParams: Promise
       <div className="orb -left-24 -top-16 size-[380px] bg-magenta/50" />
       <div className="orb -right-36 top-[560px] size-[360px] bg-blue/40" />
       <Nav links={false} cta={false} />
+      {festival && <ClearDraft />}
       <div className="relative mx-auto mt-6 max-w-[560px] px-4">
         <div className="glass flex flex-col gap-5.5 rounded-[30px] px-5 py-7 sm:px-7">
           <div className="flex flex-col gap-2.5">
