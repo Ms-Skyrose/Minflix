@@ -206,7 +206,7 @@ export function JoinForm({ refSlug, stamp, quarters, defaultCountry }: { refSlug
 
       {state.error && <p role="alert" className="m-0 text-sm text-[#FF8A80]">{state.error}</p>}
       <button type="submit" disabled={pending} className="btn-blue mt-1 text-[17px]">
-        {pending ? "Saving…" : <>Done <Arrow /></>}
+        {pending ? <span key="saving">Saving…</span> : <span key="done" className="inline-flex items-center gap-2.5">Done <Arrow /></span>}
       </button>
       <p className="m-0 text-center text-xs text-[#8FA4AD]">
         Made a mistake after joining? <a href="https://www.instagram.com/minflix" target="_blank" rel="noopener" className="underline">Message us on Instagram</a>.

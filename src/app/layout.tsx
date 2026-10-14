@@ -22,15 +22,26 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       "Run your whole film festival from one link: submissions, registration, payments and your programme. Join the waitlist for early access and a free spot in the 2027 Festival Directory.",
     openGraph: { siteName: "Minflix Events", type: "website" },
+    // Stop Chrome offering to translate the page: Translate rewrites the page's text, which crashes it on the next update.
+    other: { google: "notranslate" },
     twitter: { card: "summary_large_image" },
   };
 }
 
 export const viewport: Viewport = { themeColor: "#000C14", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
+/**
+ * Safety net for anything that still rewrites the page's text (a manual "Translate", some browser add-ons):
+ * if React tries to remove or insert around text that was moved, skip it instead of crashing the whole page.
+ */
+const DOM_GUARD = `(function(){if(typeof Node!=="function"||!Node.prototype)return;var r=Node.prototype.removeChild;Node.prototype.removeChild=function(c){if(c&&c.parentNode!==this){return c}return r.apply(this,arguments)};var i=Node.prototype.insertBefore;Node.prototype.insertBefore=function(n,ref){if(ref&&ref.parentNode!==this){return n}return i.apply(this,arguments)}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" translate="no" className="notranslate">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: DOM_GUARD }} />
+      </head>
       <body className="min-h-dvh overflow-x-hidden">
         {children}
         <Tracker />
